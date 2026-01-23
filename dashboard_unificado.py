@@ -19,6 +19,13 @@ st.title("📊 Dashboard Unificado — Bot Triplo Premium")
 st.markdown("Atualiza automaticamente a cada 30 segundos ou quando o bot gerar novos dados.")
 
 # ============================
+# AJUSTE DE FUSO HORÁRIO UTC-3
+# ============================
+
+def agora_brasil():
+    return datetime.utcnow() - timedelta(hours=3)
+
+# ============================
 # AUTO-REFRESH INTELIGENTE
 # ============================
 
@@ -37,11 +44,10 @@ def carregar_alertas():
     if not os.path.exists("alertas.csv"):
         return pd.DataFrame(columns=["data", "symbol", "tipo", "preco", "volume", "extra"])
 
-    df = pd.read_csv("alertas.csv")
+    df = pd.read_csv("alertas.csv", header=None)
 
-    # Se não tiver cabeçalho
-    if list(df.columns) == [0, 1, 2, 3, 4, 5]:
-        df.columns = ["data", "symbol", "tipo", "preco", "volume", "extra"]
+    # Força os nomes corretos
+    df.columns = ["data", "symbol", "tipo", "preco", "volume", "extra"]
 
     df["data"] = pd.to_datetime(df["data"], errors="coerce")
     return df
@@ -60,7 +66,7 @@ df_alertas = carregar_alertas()
 df_ts = carregar_trendscore()
 
 # ============================
-# AUTO-UPDATE QUANDO O BOT RODAR
+# AUTO-UPDATE (SEM RERUN)
 # ============================
 
 ts_alertas = timestamp_mais_recente(df_alertas, "data")
@@ -74,7 +80,6 @@ if ts_alertas and ts_alertas > st.session_state["ultimo_update"]:
 
 if ts_ts and ts_ts > st.session_state["ultimo_update"]:
     st.session_state["ultimo_update"] = ts_ts
-
 
 # ============================
 # ABAS PRINCIPAIS
@@ -93,11 +98,13 @@ with aba_geral:
 
     col1, col2, col3, col4 = st.columns(4)
 
+    agora = agora_brasil()
+
     with col1:
         if len(df_alertas) > 0:
             st.metric(
                 "Alertas Hoje",
-                df_alertas[df_alertas["data"].dt.date == datetime.now().date()].shape[0]
+                df_alertas[df_alertas["data"].dt.date == agora.date()].shape[0]
             )
         else:
             st.metric("Alertas Hoje", 0)
@@ -106,7 +113,7 @@ with aba_geral:
         if len(df_alertas) > 0:
             st.metric(
                 "Alertas na Semana",
-                df_alertas[df_alertas["data"] >= datetime.now() - timedelta(days=7)].shape[0]
+                df_alertas[df_alertas["data"] >= agora - timedelta(days=7)].shape[0]
             )
         else:
             st.metric("Alertas na Semana", 0)
@@ -115,7 +122,7 @@ with aba_geral:
         if len(df_alertas) > 0:
             st.metric(
                 "Alertas no Mês",
-                df_alertas[df_alertas["data"] >= datetime.now() - timedelta(days=30)].shape[0]
+                df_alertas[df_alertas["data"] >= agora - timedelta(days=30)].shape[0]
             )
         else:
             st.metric("Alertas no Mês", 0)
@@ -175,7 +182,7 @@ with aba_alertas:
             ["Hoje", "Últimas 24h", "Últimas 48h", "Semana", "Mês", "Personalizado"]
         )
 
-        agora = datetime.now()
+        agora = agora_brasil()
 
         if periodo == "Hoje":
             inicio = agora.replace(hour=0, minute=0, second=0, microsecond=0)
