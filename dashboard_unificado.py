@@ -71,11 +71,10 @@ if "ultimo_update" not in st.session_state:
 
 if ts_alertas and ts_alertas > st.session_state["ultimo_update"]:
     st.session_state["ultimo_update"] = ts_alertas
-    st.experimental_rerun()
 
 if ts_ts and ts_ts > st.session_state["ultimo_update"]:
     st.session_state["ultimo_update"] = ts_ts
-   # st.experimental_rerun()
+
 
 # ============================
 # ABAS PRINCIPAIS
@@ -295,5 +294,4 @@ with aba_ativo:
         if len(df_preco3) > 0:
             st.subheader("📈 Evolução do Preço (alertas Preço3)")
             graf_preco = df_preco3[["data", "preco"]].set_index("data")
-
             st.line_chart(graf_preco, width="stretch")
